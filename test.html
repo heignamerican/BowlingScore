@@ -7,6 +7,7 @@
 	.inputs td { white-space: nowrap; }
 	.inputs div { display: inline-block; }
 	.inputs div { width: 2.2em; /* 環境依存 */ }
+	.scores td { height: 1em; }
 </style>
 </head>
 <body>
@@ -39,17 +40,206 @@
 	</tr>
 </table>
 
+<div id="buttons-area">
+	<button id="init">初期化</button>
+	<button id="fullscore">満点</button>
+</div>
+
 <script type="text/javascript" src="jquery-1.11.0.js"></script>
 <script type="text/javascript">
 	var BOWLING = BOWLING || (function() {
 		var OPTIONS = {
-			EMPTY: []
+			EMPTY: []  //これ要らなくね？
 			,LEFT: ['', 'G', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'X']
 			,RIGHT: ['', '-', '1', '2', '3', '4', '5', '6', '7', '8', '9', '/']
+			,createRight : function(leftInput) {
+				var left = 
+					(leftInput === 'G') ? 0 :
+					(/[1-9]/.test(leftInput)) ? parseInt(leftInput, 10) :
+					null
+				;
+				if (left === null) {
+					throw "プログラミングエラー";
+				}
+				
+				var result = ['', '-'];
+				var i;
+				for (i = 1; i < 10 - left; i += 1) {
+					result.push(i.toString());
+				}
+				result.push('/');
+				return result;
+			}
+		};
+		
+		var calc = function(input) {
+			var inputs = input.concat();
+			var i;
+			var point;
+			
+			var frames = [{ left:{option:OPTIONS.LEFT} }];
+			for (i = 0; i < 10; i += 1) {
+				point = inputs.shift();
+				if (!point) {
+					break;
+				}
+				
+				var frame = frames[i];
+				if (i < 9) {
+					if (point === 'X') {
+						if (frame.left.option.indexOf(point) === -1) {
+							//throw 'なぜだ';
+							break;
+						}
+						frame.left.input = 'X';
+						frames.push({left: {option: OPTIONS.LEFT}});
+					} else {
+						if (frame.left.option.indexOf(point) === -1) {
+							//throw 'なぜだ';
+							break;
+						}
+						frame.left.input = point;
+						frame.right = {
+							option: OPTIONS.createRight(point)
+						};
+						
+						var nextPoint = inputs.shift();
+						if (nextPoint) {
+							if (frame.right.option.indexOf(nextPoint) === -1) {
+								//throw 'なぜだ';
+								break;
+							}
+							frame.right.input = nextPoint;
+							frames.push({left: {option: OPTIONS.LEFT}});
+						} else {
+							break;
+						}
+					}
+				} else {
+					if (frame.left.option.indexOf(point) === -1) {
+						//throw 'なぜだ';
+						break;
+					}
+					frame.left.input = point;
+					frame.right =
+						(point === 'X') ? { option: OPTIONS.LEFT }
+						: { option: OPTIONS.createRight(point) }
+						;
+						
+					var nextPoint = inputs.shift();
+					if (nextPoint) {
+						if (frame.right.option.indexOf(nextPoint) === -1) {
+							throw 'なぜ';
+						}
+						frame.right.input = nextPoint;
+						
+						if (point === 'X' && nextPoint === 'X') {
+							frame.end = {
+								option: OPTIONS.LEFT
+							}
+							
+							var lastPoint = inputs.shift();
+							if (lastPoint) {
+								frame.end.input = lastPoint;
+							}
+						} else if (point === 'X') {
+							frame.end = {
+								option: OPTIONS.createRight(nextPoint)
+							}
+							
+							var lastPoint = inputs.shift();
+							if (lastPoint) {
+								frame.end.input = lastPoint;
+							}
+						} else if (nextPoint === '/') {
+							frame.end = {
+								option: OPTIONS.LEFT
+							}
+							
+							var lastPoint = inputs.shift();
+							if (lastPoint) {
+								frame.end.input = lastPoint;
+							}
+						}
+					}
+				}
+			}
+			
+			//frames から有効な入力列のみ取り出す
+			inputs = $.map(frames, function(frame) {
+				return $.map(frame, function(x) {
+					return x.input;
+				});
+			});
+			var parseSingle = function(x) {
+				if (x === '') {
+					return null;
+				} else if (x === 'G' || x === '-') {
+					return 0;
+				} else if (x === 'X') {
+					return 10;
+				} else if (/[0-9]/.test(x)) {
+					return parseInt(x, 10);
+				}
+				throw 'IllegalArgument:' + x;
+			};
+			var spare = function(xs) {
+				return (xs.length < 1) ? null : parseSingle(xs[0]);
+			};
+			var strike = function(xs) {
+				if (xs.length < 2) {
+					return null;
+				} else if (xs[1] === '/') {
+					return 10;
+				} else {
+					var first = parseSingle(xs[0]);
+					if (first === null) {
+						return null;
+					}
+					var second = parseSingle(xs[1]);
+					if (second === null) {
+						return null;
+					}
+					return first + second;
+				}
+			};
+			var total = 0, score1, input1, input2, next;
+			for (i = 0; i < 10; i += 1) {
+				input1 = inputs.shift();
+				if (!input1) {
+					break;
+				} if (input1 === 'X') {
+					next = strike(inputs);
+					if (!next) {
+						break;
+					} else {
+						frames[i].score = total += 10 + next;
+					}
+				} else {
+					score1 = parseSingle(input1);
+					
+					input2 = inputs.shift();
+					if (!input2) {
+						break;
+					} else if (input2 === '/') {
+						next = spare(inputs);
+						if (!next) {
+							break;
+						} else {
+							frames[i].score = total += 10 + next;
+						}
+					} else {
+						frames[i].score = total += score1 + parseSingle(input2);
+					}
+				}
+			}
+			
+			return frames;
 		};
 		
 		return {
 			OPTIONS : OPTIONS
+			,calc : calc
 		};
 	})();
 	
@@ -73,8 +263,22 @@
 			return $result;
 		};
 		
-		var applyResult = function(frames) {
-			$.each(frames, function(i, x) {
+		var getInputs = function() {
+			return $('.inputs select').map(function(i, x) {
+				return $(x).val();
+			}).get();
+		};
+		
+		var updateAll = function() {
+			setInputs(getInputs());
+		};
+		
+		var setInputs = function(inputs) {
+			$('.inputs select').unbind('change.updateAll', updateAll);
+			$('.inputs select').remove();
+			$('.scores td').text('');
+			
+			$.each(BOWLING.calc(inputs), function(i, x) {
 				$.each(x, function(k, v) {
 					if (k === 'score') {
 						$('#score' + i).text(v);
@@ -83,127 +287,36 @@
 					}
 				});
 			});
+			
+			$('.inputs select').bind('change.updateAll', updateAll);
 		};
 		
 		return {
-			applyResult : applyResult
+			setInputs : setInputs
+			,setInput : function(input) { setInputs(input.split(' ')); }
 		};
 	})();
 	
-	
 	$(function() {
-		// ここから下は生きてる
-		var result = {
-			frames1 : [
-				{ // 1
-					 score : 9
-					,left:  { input:'9', option:BOWLING.OPTIONS.LEFT }
-					,right: { input:'-', option:BOWLING.OPTIONS.RIGHT }
-				}
-				,{ // 2
-					 score : 18
-					,left:  { input:'9', option:BOWLING.OPTIONS.LEFT }
-					,right: { input:'-', option:BOWLING.OPTIONS.RIGHT }
-				}
-				,{ // 3
-					 score : 23
-					,left:  { input:'5', option:BOWLING.OPTIONS.LEFT }
-					,right: { input:'-', option:BOWLING.OPTIONS.RIGHT }
-				}
-				,{ // 4
-					 score : 31
-					,left:  { input:'G', option:BOWLING.OPTIONS.LEFT }
-					,right: { input:'8', option:BOWLING.OPTIONS.RIGHT }
-				}
-				,{ // 5
-					 score : 51
-					,left:  { input:'9', option:BOWLING.OPTIONS.LEFT }
-					,right: { input:'/', option:BOWLING.OPTIONS.RIGHT }
-				}
-				,{ // 6
-					 score : 69
-					,left:  { input:'X', option:BOWLING.OPTIONS.LEFT }
-					,right: { input:'',  option:BOWLING.OPTIONS.EMPTY }
-				}
-				,{ // 7
-					 score : 77
-					,left:  { input:'8', option:BOWLING.OPTIONS.LEFT }
-					,right: { input:'-', option:BOWLING.OPTIONS.RIGHT }
-				}
-				,{ // 8
-					 score : 86
-					,left:  { input:'9', option:BOWLING.OPTIONS.LEFT }
-					,right: { input:'-', option:BOWLING.OPTIONS.RIGHT }
-				}
-				,{ // 9
-					 score : 92
-					,left:  { input:'6', option:BOWLING.OPTIONS.LEFT }
-					,right: { input:'-', option:BOWLING.OPTIONS.RIGHT }
-				}
-				,{ // 10
-					 score : 98
-					,left:  { input:'1', option:BOWLING.OPTIONS.LEFT }
-					,right: { input:'5', option:BOWLING.OPTIONS.RIGHT }
-					,end :  { input:'',  option:BOWLING.OPTIONS.EMPTY }
-				}
-			]
-			,frames2 : [
-				{ // 1
-					 score : 9
-					,left:  { input:'8', option:BOWLING.OPTIONS.LEFT }
-					,right: { input:'1', option:BOWLING.OPTIONS.RIGHT }
-				}
-				,{ // 2
-					 score : 17
-					,left:  { input:'8', option:BOWLING.OPTIONS.LEFT }
-					,right: { input:'-', option:BOWLING.OPTIONS.RIGHT }
-				}
-				,{ // 3
-					 score : 26
-					,left:  { input:'G', option:BOWLING.OPTIONS.LEFT }
-					,right: { input:'9', option:BOWLING.OPTIONS.RIGHT }
-				}
-				,{ // 4
-					 score : 34
-					,left:  { input:'1', option:BOWLING.OPTIONS.LEFT }
-					,right: { input:'7', option:BOWLING.OPTIONS.RIGHT }
-				}
-				,{ // 5
-					 score : 43
-					,left:  { input:'G', option:BOWLING.OPTIONS.LEFT }
-					,right: { input:'9', option:BOWLING.OPTIONS.RIGHT }
-				}
-				,{ // 6
-					 score : 52
-					,left:  { input:'8', option:BOWLING.OPTIONS.LEFT }
-					,right: { input:'1',  option:BOWLING.OPTIONS.RIGHT }
-				}
-				,{ // 7
-					 score : 61
-					,left:  { input:'6', option:BOWLING.OPTIONS.LEFT }
-					,right: { input:'3', option:BOWLING.OPTIONS.RIGHT }
-				}
-				,{ // 8
-					 score : 68
-					,left:  { input:'1', option:BOWLING.OPTIONS.LEFT }
-					,right: { input:'6', option:BOWLING.OPTIONS.RIGHT }
-				}
-				,{ // 9
-					 score : 77
-					,left:  { input:'7', option:BOWLING.OPTIONS.LEFT }
-					,right: { input:'2', option:BOWLING.OPTIONS.RIGHT }
-				}
-				,{ // 10
-					 score : 83
-					,left:  { input:'5', option:BOWLING.OPTIONS.LEFT }
-					,right: { input:'1', option:BOWLING.OPTIONS.RIGHT }
-					,end :  { input:'',  option:BOWLING.OPTIONS.EMPTY }
-				}
-			]
+		var init = function() {
+			BOWLING_GUI.setInput("");
 		};
 		
-		BOWLING_GUI.applyResult(result.frames1);
-		//BOWLING_GUI.applyResult(result.frames2);
+		$('button#init').bind('click', init);
+		$('button#fullscore').bind('click', function() {
+			BOWLING_GUI.setInput("X X X X X X X X X X X X");
+		});
+		
+		//BOWLING_GUI.setInput("8 1 8 - G 9 1 7 G 9 8 1 6 3 1 6 7 2 5 1");
+		$('<button></button>')
+			.text('点数パターン1')
+			.bind('click', function() {
+				BOWLING_GUI.setInput("9 - 9 - 5 - G 8 9 / X 8 - 9 - 6 - 1 5");
+			})
+			.appendTo($('div#buttons-area'))
+			;
+		
+		init();
 	});
 </script>
 </body>
