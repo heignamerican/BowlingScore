@@ -73,7 +73,7 @@
 			}
 		};
 		
-		var calc = function(input) {
+		var createFrames = function(input) {
 			var inputs = input.concat();
 			var i;
 			var point;
@@ -165,13 +165,17 @@
 					}
 				}
 			}
-			
+			return frames;
+		};
+		
+		var updateScore = function(frames) {
 			//frames から有効な入力列のみ取り出す
-			inputs = $.map(frames, function(frame) {
+			var inputs = $.map(frames, function(frame) {
 				return $.map(frame, function(x) {
 					return x.input;
 				});
 			});
+			
 			var parseSingle = function(x) {
 				if (x === '') {
 					return null;
@@ -204,7 +208,9 @@
 					return first + second;
 				}
 			};
+			
 			var total = 0, score1, input1, input2, next;
+			var i;
 			for (i = 0; i < 10; i += 1) {
 				input1 = inputs.shift();
 				if (!input1) {
@@ -234,7 +240,11 @@
 					}
 				}
 			}
-			
+		};
+		
+		var calc = function(input) {
+			var frames = createFrames(input);
+			updateScore(frames);
 			return frames;
 		};
 		
