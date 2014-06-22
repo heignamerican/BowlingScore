@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>ボウリング(仮)</title>
+<meta charset="UTF-8">
+<style type="text/css">
+	.inputs td { white-space: nowrap; }
+	.inputs div { display: inline-block; }
+	.inputs div { width: 2.2em; /* 環境依存 */ }
+</style>
+</head>
+<body>
+
+<table border=1>
+	<tr> <th>1</th> <th>2</th> <th>3</th> <th>4</th> <th>5</th> <th>6</th> <th>7</th> <th>8</th> <th>9</th> <th>10</th> </tr>
+	<tr class="inputs">
+		<td><div id="left0"></div> <div id="right0"></div></td>
+		<td><div id="left1"></div> <div id="right1"></div></td>
+		<td><div id="left2"></div> <div id="right2"></div></td>
+		<td><div id="left3"></div> <div id="right3"></div></td>
+		<td><div id="left4"></div> <div id="right4"></div></td>
+		<td><div id="left5"></div> <div id="right5"></div></td>
+		<td><div id="left6"></div> <div id="right6"></div></td>
+		<td><div id="left7"></div> <div id="right7"></div></td>
+		<td><div id="left8"></div> <div id="right8"></div></td>
+		<td><div id="left9"></div> <div id="right9"></div> <div id="end9"></div></td>
+	</tr>
+	<tr class="scores">
+		<td id="score0"></td>
+		<td id="score1"></td>
+		<td id="score2"></td>
+		<td id="score3"></td>
+		<td id="score4"></td>
+		<td id="score5"></td>
+		<td id="score6"></td>
+		<td id="score7"></td>
+		<td id="score8"></td>
+		<td id="score9"></td>
+	</tr>
+</table>
+
+<script type="text/javascript" src="jquery-1.11.0.js"></script>
+<script type="text/javascript">
+	var BOWLING = BOWLING || (function() {
+		var OPTIONS = {
+			EMPTY: []
+			,LEFT: ['', 'G', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'X']
+			,RIGHT: ['', '-', '1', '2', '3', '4', '5', '6', '7', '8', '9', '/']
+		};
+		
+		return {
+			OPTIONS : OPTIONS
+		};
+	})();
+	
+	
+	var BOWLING_GUI = BOWLING_GUI || (function() {
+		var toSelect = function(v) {
+			if (v.option === BOWLING.OPTIONS.EMPTY) {
+				return $('<input type="hidden" />');
+			}
+			
+			var $result = $('<select></select>');
+			$.each(v.option, function(i, x) {
+				$('<option></optin>')
+					.val(x)
+					.attr('name', x)
+					.text(x)
+					.appendTo($result)
+					;
+			});
+			$result.val(v.input);
+			return $result;
+		};
+		
+		var applyResult = function(frames) {
+			$.each(frames, function(i, x) {
+				$.each(x, function(k, v) {
+					if (k === 'score') {
+						$('#score' + i).text(v);
+					} else {
+						$('#' + k + i).append(toSelect(v));
+					}
+				});
+			});
+		};
+		
+		return {
+			applyResult : applyResult
+		};
+	})();
+	
+	
+	$(function() {
+		// ここから下は生きてる
+		var result = {
+			frames1 : [
+				{ // 1
+					 score : 9
+					,left:  { input:'9', option:BOWLING.OPTIONS.LEFT }
+					,right: { input:'-', option:BOWLING.OPTIONS.RIGHT }
+				}
+				,{ // 2
+					 score : 18
+					,left:  { input:'9', option:BOWLING.OPTIONS.LEFT }
+					,right: { input:'-', option:BOWLING.OPTIONS.RIGHT }
+				}
+				,{ // 3
+					 score : 23
+					,left:  { input:'5', option:BOWLING.OPTIONS.LEFT }
+					,right: { input:'-', option:BOWLING.OPTIONS.RIGHT }
+				}
+				,{ // 4
+					 score : 31
+					,left:  { input:'G', option:BOWLING.OPTIONS.LEFT }
+					,right: { input:'8', option:BOWLING.OPTIONS.RIGHT }
+				}
+				,{ // 5
+					 score : 51
+					,left:  { input:'9', option:BOWLING.OPTIONS.LEFT }
+					,right: { input:'/', option:BOWLING.OPTIONS.RIGHT }
+				}
+				,{ // 6
+					 score : 69
+					,left:  { input:'X', option:BOWLING.OPTIONS.LEFT }
+					,right: { input:'',  option:BOWLING.OPTIONS.EMPTY }
+				}
+				,{ // 7
+					 score : 77
+					,left:  { input:'8', option:BOWLING.OPTIONS.LEFT }
+					,right: { input:'-', option:BOWLING.OPTIONS.RIGHT }
+				}
+				,{ // 8
+					 score : 86
+					,left:  { input:'9', option:BOWLING.OPTIONS.LEFT }
+					,right: { input:'-', option:BOWLING.OPTIONS.RIGHT }
+				}
+				,{ // 9
+					 score : 92
+					,left:  { input:'6', option:BOWLING.OPTIONS.LEFT }
+					,right: { input:'-', option:BOWLING.OPTIONS.RIGHT }
+				}
+				,{ // 10
+					 score : 98
+					,left:  { input:'1', option:BOWLING.OPTIONS.LEFT }
+					,right: { input:'5', option:BOWLING.OPTIONS.RIGHT }
+					,end :  { input:'',  option:BOWLING.OPTIONS.EMPTY }
+				}
+			]
+			,frames2 : [
+				{ // 1
+					 score : 9
+					,left:  { input:'8', option:BOWLING.OPTIONS.LEFT }
+					,right: { input:'1', option:BOWLING.OPTIONS.RIGHT }
+				}
+				,{ // 2
+					 score : 17
+					,left:  { input:'8', option:BOWLING.OPTIONS.LEFT }
+					,right: { input:'-', option:BOWLING.OPTIONS.RIGHT }
+				}
+				,{ // 3
+					 score : 26
+					,left:  { input:'G', option:BOWLING.OPTIONS.LEFT }
+					,right: { input:'9', option:BOWLING.OPTIONS.RIGHT }
+				}
+				,{ // 4
+					 score : 34
+					,left:  { input:'1', option:BOWLING.OPTIONS.LEFT }
+					,right: { input:'7', option:BOWLING.OPTIONS.RIGHT }
+				}
+				,{ // 5
+					 score : 43
+					,left:  { input:'G', option:BOWLING.OPTIONS.LEFT }
+					,right: { input:'9', option:BOWLING.OPTIONS.RIGHT }
+				}
+				,{ // 6
+					 score : 52
+					,left:  { input:'8', option:BOWLING.OPTIONS.LEFT }
+					,right: { input:'1',  option:BOWLING.OPTIONS.RIGHT }
+				}
+				,{ // 7
+					 score : 61
+					,left:  { input:'6', option:BOWLING.OPTIONS.LEFT }
+					,right: { input:'3', option:BOWLING.OPTIONS.RIGHT }
+				}
+				,{ // 8
+					 score : 68
+					,left:  { input:'1', option:BOWLING.OPTIONS.LEFT }
+					,right: { input:'6', option:BOWLING.OPTIONS.RIGHT }
+				}
+				,{ // 9
+					 score : 77
+					,left:  { input:'7', option:BOWLING.OPTIONS.LEFT }
+					,right: { input:'2', option:BOWLING.OPTIONS.RIGHT }
+				}
+				,{ // 10
+					 score : 83
+					,left:  { input:'5', option:BOWLING.OPTIONS.LEFT }
+					,right: { input:'1', option:BOWLING.OPTIONS.RIGHT }
+					,end :  { input:'',  option:BOWLING.OPTIONS.EMPTY }
+				}
+			]
+		};
+		
+		BOWLING_GUI.applyResult(result.frames1);
+		//BOWLING_GUI.applyResult(result.frames2);
+	});
+</script>
+</body>
+</html>
