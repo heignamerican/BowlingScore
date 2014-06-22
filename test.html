@@ -49,8 +49,7 @@
 <script type="text/javascript">
 	var BOWLING = BOWLING || (function() {
 		var OPTIONS = {
-			EMPTY: []  //これ要らなくね？
-			,LEFT: ['', 'G', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'X']
+			LEFT: ['', 'G', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'X']
 			,RIGHT: ['', '-', '1', '2', '3', '4', '5', '6', '7', '8', '9', '/']
 			,createRight : function(leftInput) {
 				var left = 
@@ -246,10 +245,6 @@
 	
 	var BOWLING_GUI = BOWLING_GUI || (function() {
 		var toSelect = function(v) {
-			if (v.option === BOWLING.OPTIONS.EMPTY) {
-				return $('<input type="hidden" />');
-			}
-			
 			var $result = $('<select></select>');
 			$.each(v.option, function(i, x) {
 				$('<option></optin>')
